@@ -24,7 +24,7 @@ export class StudentService {
 
   async findOne(id: string) {
     const student = await this.prisma.student.findUnique({
-      where: { student_id: id },
+      where: { id: id },
       include: {
         paciProfiles: true,
       },
@@ -38,15 +38,15 @@ export class StudentService {
   }
 
   async findByUserId(userId: string) {
-    const student = await this.prisma.student.findUnique({
-      where: { user_id: userId },
+    const student = await this.prisma.student.findFirst({
+      where: { userId: userId },
       include: {
         paciProfiles: true,
       },
     });
 
     if (!student) {
-      throw new NotFoundException(`Student with user_id ${userId} not found`);
+      throw new NotFoundException(`Student with userId ${userId} not found`);
     }
 
     return student;
@@ -54,7 +54,7 @@ export class StudentService {
 
   async update(id: string, updateStudentDto: UpdateStudentDto) {
     const student = await this.prisma.student.update({
-      where: { student_id: id },
+      where: { id: id },
       data: updateStudentDto,
     });
 
@@ -67,7 +67,7 @@ export class StudentService {
 
   async remove(id: string) {
     const student = await this.prisma.student.delete({
-      where: { student_id: id },
+      where: { id: id },
     });
 
     if (!student) {
@@ -121,12 +121,12 @@ export class StudentService {
     
     if (parts.length >= 3) {
       return {
-        user_id: parts[0] || '',
-        rut: parts[1] || '',
-        nombre: parts[2] || '',
-        apellido: parts[3] || '',
-        curso: parts[4] || '',
-        establecimiento: parts[5] || '',
+        userId: parts[0] || '',
+        nombreCompleto: parts[1] || '',
+        fechaNacimiento: parts[2] || '',
+        cursoActual: parts[3] || '',
+        direccion: parts[4] || '',
+        apoderado: parts[5] || '',
       };
     }
     

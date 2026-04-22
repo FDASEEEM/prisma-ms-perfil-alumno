@@ -11,26 +11,30 @@ datasource db {
 }
 
 model Student {
-  student_id      String   @id @default(uuid())
-  user_id         String   @unique
-  rut             String
-  nombre          String
-  apellido        String
-  curso           String
-  establecimiento String
+  id              String   @id @default(uuid())
+  userId          String
+  nombreCompleto  String
+  fechaNacimiento DateTime
+  cursoActual     String
+  direccion       String
+  apoderado       String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   paciProfiles    PaciProfile[]
 }
 
 model PaciProfile {
-  paci_id                String   @id @default(uuid())
-  student_id             String
-  fecha_diagnostico      DateTime
-  nee                    String
-  descripcion_incapacidad String
-  observaciones          String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  student                Student  @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  id                 String   @id @default(uuid())
+  studentId          String
+  userId             String
+  diagnostico        String
+  fechaElaboracion   DateTime
+  fechaRevision      DateTime
+  duracion           String
+  validFrom          DateTime
+  validUntil         DateTime
+  datosEstructurales Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

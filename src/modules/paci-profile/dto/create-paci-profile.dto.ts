@@ -1,23 +1,39 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsDateString, IsObject } from 'class-validator';
 
 export class CreatePaciProfileDto {
   @IsUUID()
   @IsNotEmpty()
-  student_id: string;
+  studentId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  diagnostico: string;
 
   @IsDateString()
   @IsNotEmpty()
-  fecha_diagnostico: string;
+  fechaElaboracion: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  fechaRevision: string;
 
   @IsString()
   @IsNotEmpty()
-  nee: string;
+  duracion: string;
 
-  @IsString()
+  @IsDateString()
   @IsNotEmpty()
-  descripcion_incapacidad: string;
+  validFrom: string;
 
-  @IsString()
-  @IsOptional()
-  observaciones?: string;
+  @IsDateString()
+  @IsNotEmpty()
+  validUntil: string;
+
+  @IsObject()
+  @IsNotEmpty()
+  datosEstructurales: object;
 }

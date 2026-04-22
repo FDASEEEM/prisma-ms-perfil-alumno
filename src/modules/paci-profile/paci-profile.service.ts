@@ -10,11 +10,11 @@ export class PaciProfileService {
   async create(createPaciProfileDto: CreatePaciProfileDto) {
     // Verify student exists
     const student = await this.prisma.student.findUnique({
-      where: { student_id: createPaciProfileDto.student_id },
+      where: { id: createPaciProfileDto.studentId },
     });
 
     if (!student) {
-      throw new NotFoundException(`Student with ID ${createPaciProfileDto.student_id} not found`);
+      throw new NotFoundException(`Student with ID ${createPaciProfileDto.studentId} not found`);
     }
 
     return this.prisma.paciProfile.create({
@@ -35,7 +35,7 @@ export class PaciProfileService {
 
   async findOne(id: string) {
     const paciProfile = await this.prisma.paciProfile.findUnique({
-      where: { paci_id: id },
+      where: { id: id },
       include: {
         student: true,
       },
@@ -50,7 +50,7 @@ export class PaciProfileService {
 
   async findByStudentId(studentId: string) {
     return this.prisma.paciProfile.findMany({
-      where: { student_id: studentId },
+      where: { studentId: studentId },
       include: {
         student: true,
       },
@@ -59,7 +59,7 @@ export class PaciProfileService {
 
   async update(id: string, updatePaciProfileDto: UpdatePaciProfileDto) {
     const paciProfile = await this.prisma.paciProfile.update({
-      where: { paci_id: id },
+      where: { id: id },
       data: updatePaciProfileDto,
       include: {
         student: true,
@@ -75,7 +75,7 @@ export class PaciProfileService {
 
   async remove(id: string) {
     const paciProfile = await this.prisma.paciProfile.delete({
-      where: { paci_id: id },
+      where: { id: id },
     });
 
     if (!paciProfile) {

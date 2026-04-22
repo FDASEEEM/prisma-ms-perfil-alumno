@@ -1,27 +1,27 @@
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsDateString } from 'class-validator';
 
 export class CreateStudentDto {
   @IsUUID()
   @IsNotEmpty()
-  user_id: string;
+  userId: string;
 
   @IsString()
   @IsNotEmpty()
-  rut: string;
+  nombreCompleto: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  fechaNacimiento: string;
 
   @IsString()
   @IsNotEmpty()
-  nombre: string;
+  cursoActual: string;
 
   @IsString()
   @IsNotEmpty()
-  apellido: string;
+  direccion: string;
 
   @IsString()
   @IsNotEmpty()
-  curso: string;
-
-  @IsString()
-  @IsNotEmpty()
-  establecimiento: string;
+  apoderado: string;
 }
