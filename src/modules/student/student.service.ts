@@ -109,8 +109,9 @@ export class StudentService {
         message: 'Import completed successfully',
         count: createdStudents.count,
       };
-    } catch (error) {
-      throw new Error(`Failed to parse PDF: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse PDF: ${message}`);
     }
   }
 
