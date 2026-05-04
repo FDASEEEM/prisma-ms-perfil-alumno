@@ -16,12 +16,4 @@ export class CreateStudentDto {
   @IsString()
   @IsNotEmpty()
   cursoActual: string;
-
-  @IsString()
-  @IsNotEmpty()
-  direccion: string;
-
-  @IsString()
-  @IsNotEmpty()
-  apoderado: string;
 }
