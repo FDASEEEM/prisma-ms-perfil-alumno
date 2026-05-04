@@ -16,8 +16,6 @@ model Student {
   nombreCompleto  String
   fechaNacimiento DateTime
   cursoActual     String
-  direccion       String
-  apoderado       String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   paciProfiles    PaciProfile[]

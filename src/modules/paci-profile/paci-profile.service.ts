@@ -36,6 +36,82 @@ export class PaciProfileService {
     });
   }
 
+  async findFiltered(filters: {
+    studentId?: string;
+    isActive?: string;
+    curso?: string;
+    fromDate?: string;
+    toDate?: string;
+  }) {
+    const where: Prisma.PaciProfileWhereInput = {};
+
+    if (filters.studentId) {
+      where.studentId = filters.studentId;
+    }
+
+    if (filters.curso) {
+      where.student = { is: { cursoActual: filters.curso } };
+    }
+
+    if (filters.fromDate || filters.toDate) {
+      where.fechaElaboracion = {};
+      if (filters.fromDate) {
+        where.fechaElaboracion.gte = new Date(filters.fromDate);
+      }
+      if (filters.toDate) {
+        where.fechaElaboracion.lte = new Date(filters.toDate);
+      }
+    }
+
+    if (filters.isActive !== undefined) {
+      const isActive = filters.isActive === 'true' || filters.isActive === '1';
+      const now = new Date();
+      const activeCondition: Prisma.PaciProfileWhereInput = {
+        AND: [{ validFrom: { lte: now } }, { validUntil: { gte: now } }],
+      };
+
+      Object.assign(
+        where,
+        isActive ? activeCondition : { NOT: activeCondition },
+      );
+    }
+
+    return this.prisma.paciProfile.findMany({
+      where,
+      include: { student: true },
+    });
+  }
+
+  async findActive() {
+    const now = new Date();
+    return this.prisma.paciProfile.findMany({
+      where: {
+        validFrom: { lte: now },
+        validUntil: { gte: now },
+      },
+      include: { student: true },
+    });
+  }
+
+  async findHistorical() {
+    const now = new Date();
+    return this.prisma.paciProfile.findMany({
+      where: {
+        validUntil: { lt: now },
+      },
+      include: { student: true },
+    });
+  }
+
+  async findRecent(limit?: string) {
+    const take = Math.max(1, Number.parseInt(limit || '10', 10) || 10);
+    return this.prisma.paciProfile.findMany({
+      orderBy: { createdAt: 'desc' },
+      take,
+      include: { student: true },
+    });
+  }
+
   async findOne(id: string) {
     const paciProfile = await this.prisma.paciProfile.findUnique({
       where: { id: id },

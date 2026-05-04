@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PaciProfileService } from './paci-profile.service';
 import { CreatePaciProfileDto } from './dto/create-paci-profile.dto';
@@ -26,6 +27,38 @@ export class PaciProfileController {
   @Get()
   findAll() {
     return this.paciProfileService.findAll();
+  }
+
+  @Get('filter')
+  findFiltered(
+    @Query('studentId') studentId?: string,
+    @Query('isActive') isActive?: string,
+    @Query('curso') curso?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+  ) {
+    return this.paciProfileService.findFiltered({
+      studentId,
+      isActive,
+      curso,
+      fromDate,
+      toDate,
+    });
+  }
+
+  @Get('active')
+  findActive() {
+    return this.paciProfileService.findActive();
+  }
+
+  @Get('historical')
+  findHistorical() {
+    return this.paciProfileService.findHistorical();
+  }
+
+  @Get('recent')
+  findRecent(@Query('limit') limit?: string) {
+    return this.paciProfileService.findRecent(limit);
   }
 
   @Get(':id')

@@ -9,8 +9,12 @@ export class StudentService {
   constructor(private prisma: PrismaService) {}
 
   async create(createStudentDto: CreateStudentDto) {
+    const normalized = {
+      ...createStudentDto,
+      fechaNacimiento: this.normalizeDate(createStudentDto.fechaNacimiento),
+    };
     return this.prisma.student.create({
-      data: createStudentDto,
+      data: normalized,
     });
   }
 
@@ -53,9 +57,15 @@ export class StudentService {
   }
 
   async update(id: string, updateStudentDto: UpdateStudentDto) {
+    const normalized = {
+      ...updateStudentDto,
+      ...(updateStudentDto.fechaNacimiento
+        ? { fechaNacimiento: this.normalizeDate(updateStudentDto.fechaNacimiento) }
+        : {}),
+    };
     const student = await this.prisma.student.update({
       where: { id: id },
-      data: updateStudentDto,
+      data: normalized,
     });
 
     if (!student) {
@@ -126,11 +136,18 @@ export class StudentService {
         nombreCompleto: parts[1] || '',
         fechaNacimiento: parts[2] || '',
         cursoActual: parts[3] || '',
-        direccion: parts[4] || '',
-        apoderado: parts[5] || '',
       };
     }
     
     return null;
+  }
+
+  private normalizeDate(value: string) {
+    // Accepts YYYY-MM-DD or full ISO date-time strings.
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date;
   }
 }
