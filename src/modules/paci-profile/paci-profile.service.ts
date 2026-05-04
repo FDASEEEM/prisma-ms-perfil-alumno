@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/services/prisma.service';
 import { CreatePaciProfileDto } from './dto/create-paci-profile.dto';
 import { UpdatePaciProfileDto } from './dto/update-paci-profile.dto';
@@ -17,8 +18,10 @@ export class PaciProfileService {
       throw new NotFoundException(`Student with ID ${createPaciProfileDto.studentId} not found`);
     }
 
+    const normalized = this.normalizeCreatePaciDates(createPaciProfileDto);
+
     return this.prisma.paciProfile.create({
-      data: createPaciProfileDto,
+      data: normalized,
       include: {
         student: true,
       },
@@ -58,9 +61,11 @@ export class PaciProfileService {
   }
 
   async update(id: string, updatePaciProfileDto: UpdatePaciProfileDto) {
+    const normalized = this.normalizeUpdatePaciDates(updatePaciProfileDto);
+
     const paciProfile = await this.prisma.paciProfile.update({
       where: { id: id },
-      data: updatePaciProfileDto,
+      data: normalized,
       include: {
         student: true,
       },
@@ -83,5 +88,42 @@ export class PaciProfileService {
     }
 
     return paciProfile;
+  }
+
+  private normalizeCreatePaciDates(dto: CreatePaciProfileDto): Prisma.PaciProfileUncheckedCreateInput {
+    return {
+      studentId: dto.studentId,
+      userId: dto.userId,
+      diagnostico: dto.diagnostico,
+      fechaElaboracion: this.normalizeDate(dto.fechaElaboracion),
+      fechaRevision: this.normalizeDate(dto.fechaRevision),
+      duracion: dto.duracion,
+      validFrom: this.normalizeDate(dto.validFrom),
+      validUntil: this.normalizeDate(dto.validUntil),
+      datosEstructurales: dto.datosEstructurales,
+    };
+  }
+
+  private normalizeUpdatePaciDates(dto: UpdatePaciProfileDto): Prisma.PaciProfileUncheckedUpdateInput {
+    return {
+      ...(dto.studentId ? { studentId: dto.studentId } : {}),
+      ...(dto.userId ? { userId: dto.userId } : {}),
+      ...(dto.diagnostico ? { diagnostico: dto.diagnostico } : {}),
+      ...(dto.fechaElaboracion ? { fechaElaboracion: this.normalizeDate(dto.fechaElaboracion) } : {}),
+      ...(dto.fechaRevision ? { fechaRevision: this.normalizeDate(dto.fechaRevision) } : {}),
+      ...(dto.duracion ? { duracion: dto.duracion } : {}),
+      ...(dto.validFrom ? { validFrom: this.normalizeDate(dto.validFrom) } : {}),
+      ...(dto.validUntil ? { validUntil: this.normalizeDate(dto.validUntil) } : {}),
+      ...(dto.datosEstructurales ? { datosEstructurales: dto.datosEstructurales } : {}),
+    };
+  }
+
+  private normalizeDate(value: string) {
+    // Accepts YYYY-MM-DD or full ISO date-time strings.
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date;
   }
 }
