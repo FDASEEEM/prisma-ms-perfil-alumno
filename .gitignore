@@ -4,3 +4,14 @@ node_modules
 dist
 /generated/prisma
 /dist
+
+node_modules
+dist
+coverage
+.env
+.DS_Store
+*.log
+.idea
+.vscode
+prisma/dev.db
+prisma/*.sqlite
