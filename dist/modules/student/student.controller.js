@@ -18,86 +18,122 @@ const platform_express_1 = require("@nestjs/platform-express");
 const student_service_1 = require("./student.service");
 const create_student_dto_1 = require("./dto/create-student.dto");
 const update_student_dto_1 = require("./dto/update-student.dto");
+const supabase_jwt_guard_1 = require("../../common/guards/supabase-jwt.guard");
 let StudentController = class StudentController {
     studentService;
     constructor(studentService) {
         this.studentService = studentService;
     }
-    create(createStudentDto) {
-        return this.studentService.create(createStudentDto);
+    create(request, createStudentDto) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.create(userId, createStudentDto);
     }
-    findAll() {
-        return this.studentService.findAll();
+    findAll(request) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.findAll(userId);
     }
-    findOne(id) {
-        return this.studentService.findOne(id);
-    }
-    findByUserId(userId) {
+    findMe(request) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
         return this.studentService.findByUserId(userId);
     }
-    update(id, updateStudentDto) {
-        return this.studentService.update(id, updateStudentDto);
+    findOne(request, id) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.findOne(userId, id);
     }
-    remove(id) {
-        return this.studentService.remove(id);
+    update(request, id, updateStudentDto) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.update(userId, id, updateStudentDto);
     }
-    importFromPdf(file) {
-        return this.studentService.importFromPdf(file.buffer);
+    remove(request, id) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.remove(userId, id);
+    }
+    importFromPdf(request, file) {
+        const userId = request.user?.id;
+        if (!userId) {
+            throw new common_1.BadRequestException('Authenticated user is required.');
+        }
+        return this.studentService.importFromPdf(userId, file.buffer);
     }
 };
 exports.StudentController = StudentController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_student_dto_1.CreateStudentDto]),
+    __metadata("design:paramtypes", [Object, create_student_dto_1.CreateStudentDto]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StudentController.prototype, "findMe", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Get)('user/:userId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], StudentController.prototype, "findByUserId", null);
-__decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_student_dto_1.UpdateStudentDto]),
+    __metadata("design:paramtypes", [Object, String, update_student_dto_1.UpdateStudentDto]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)('import'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
-    __param(0, (0, common_1.UploadedFile)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], StudentController.prototype, "importFromPdf", null);
 exports.StudentController = StudentController = __decorate([
     (0, common_1.Controller)('students'),
+    (0, common_1.UseGuards)(supabase_jwt_guard_1.SupabaseJwtGuard),
     __metadata("design:paramtypes", [student_service_1.StudentService])
 ], StudentController);
 //# sourceMappingURL=student.controller.js.map

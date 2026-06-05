@@ -1,22 +1,28 @@
+import { Request } from 'express';
 import { PaciProfileService } from './paci-profile.service';
 import { CreatePaciProfileDto } from './dto/create-paci-profile.dto';
 import { UpdatePaciProfileDto } from './dto/update-paci-profile.dto';
+type RequestWithUser = Request & {
+    user?: {
+        id?: string;
+    };
+};
 export declare class PaciProfileController {
     private readonly paciProfileService;
     constructor(paciProfileService: PaciProfileService);
-    create(createPaciProfileDto: CreatePaciProfileDto): Promise<{
+    create(request: RequestWithUser, createPaciProfileDto: CreatePaciProfileDto): Promise<{
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -28,19 +34,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    findAll(): Promise<({
+    findAll(request: RequestWithUser): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -52,19 +58,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    findFiltered(studentId?: string, isActive?: string, curso?: string, fromDate?: string, toDate?: string): Promise<({
+    findFiltered(request: RequestWithUser, studentId?: string, isActive?: string, curso?: string, fromDate?: string, toDate?: string): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -76,19 +82,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    findActive(): Promise<({
+    findActive(request: RequestWithUser): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -100,19 +106,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    findHistorical(): Promise<({
+    findHistorical(request: RequestWithUser): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -124,19 +130,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    findRecent(limit?: string): Promise<({
+    findRecent(request: RequestWithUser, limit?: string): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -148,19 +154,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    findOne(id: string): Promise<{
+    findOne(request: RequestWithUser, id: string): Promise<{
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -172,19 +178,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    findByStudentId(studentId: string): Promise<({
+    findByStudentId(request: RequestWithUser, studentId: string): Promise<({
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -196,19 +202,19 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
-    update(id: string, updatePaciProfileDto: UpdatePaciProfileDto): Promise<{
+    update(request: RequestWithUser, id: string, updatePaciProfileDto: UpdatePaciProfileDto): Promise<{
         student: {
-            userId: string;
             nombreCompleto: string;
             fechaNacimiento: Date;
             cursoActual: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
         };
     } & {
-        userId: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -220,9 +226,9 @@ export declare class PaciProfileController {
         validUntil: Date;
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    remove(id: string): Promise<{
-        userId: string;
+    remove(request: RequestWithUser, id: string): Promise<{
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
         studentId: string;
@@ -235,3 +241,4 @@ export declare class PaciProfileController {
         datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
     }>;
 }
+export {};
