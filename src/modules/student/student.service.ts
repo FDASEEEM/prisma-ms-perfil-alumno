@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/services/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -8,27 +8,31 @@ import pdfParse from 'pdf-parse';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createStudentDto: CreateStudentDto) {
+  async create(userId: string, createStudentDto: CreateStudentDto) {
     const normalized = {
       ...createStudentDto,
       fechaNacimiento: this.normalizeDate(createStudentDto.fechaNacimiento),
     };
     return this.prisma.student.create({
-      data: normalized,
+      data: {
+        ...normalized,
+        userId,
+      },
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     return this.prisma.student.findMany({
+      where: { userId },
       include: {
         paciProfiles: true,
       },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(userId: string, id: string) {
     const student = await this.prisma.student.findUnique({
-      where: { id: id },
+      where: { id },
       include: {
         paciProfiles: true,
       },
@@ -38,12 +42,16 @@ export class StudentService {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
+    if (student.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this student.');
+    }
+
     return student;
   }
 
   async findByUserId(userId: string) {
     const student = await this.prisma.student.findFirst({
-      where: { userId: userId },
+      where: { userId },
       include: {
         paciProfiles: true,
       },
@@ -56,52 +64,40 @@ export class StudentService {
     return student;
   }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto) {
+  async update(userId: string, id: string, updateStudentDto: UpdateStudentDto) {
+    const existing = await this.findOne(userId, id);
+
     const normalized = {
       ...updateStudentDto,
       ...(updateStudentDto.fechaNacimiento
         ? { fechaNacimiento: this.normalizeDate(updateStudentDto.fechaNacimiento) }
         : {}),
     };
-    const student = await this.prisma.student.update({
-      where: { id: id },
+
+    return this.prisma.student.update({
+      where: { id: existing.id },
       data: normalized,
     });
-
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${id} not found`);
-    }
-
-    return student;
   }
 
-  async remove(id: string) {
-    const student = await this.prisma.student.delete({
-      where: { id: id },
+  async remove(userId: string, id: string) {
+    const existing = await this.findOne(userId, id);
+
+    return this.prisma.student.delete({
+      where: { id: existing.id },
     });
-
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${id} not found`);
-    }
-
-    return student;
   }
 
-  async importFromPdf(file: Buffer) {
+  async importFromPdf(userId: string, file: Buffer) {
     try {
       const data = await (pdfParse as any)(file);
       const text = data.text;
 
-      // Parse PDF text to extract student data
-      // This is a basic implementation - adjust parsing logic based on PDF format
       const lines = text.split('\n').filter(line => line.trim());
-      
-      // Example parsing - adjust according to your PDF format
+
       const students: CreateStudentDto[] = [];
       for (const line of lines) {
         if (line.includes('RUT:') || line.includes('rut:')) {
-          // Extract student data from line
-          // This is a placeholder - implement actual parsing logic
           const studentData = this.parseStudentLine(line);
           if (studentData) {
             students.push(studentData);
@@ -109,9 +105,12 @@ export class StudentService {
         }
       }
 
-      // Bulk create students
       const createdStudents = await this.prisma.student.createMany({
-        data: students,
+        data: students.map(s => ({
+          ...s,
+          fechaNacimiento: this.normalizeDate(s.fechaNacimiento) as Date,
+          userId,
+        })),
         skipDuplicates: true,
       });
 
@@ -126,24 +125,20 @@ export class StudentService {
   }
 
   private parseStudentLine(line: string): CreateStudentDto | null {
-    // Implement actual parsing logic based on PDF format
-    // This is a placeholder - adjust according to your PDF structure
     const parts = line.split(/[,;|]/).map(p => p.trim());
-    
+
     if (parts.length >= 3) {
       return {
-        userId: parts[0] || '',
         nombreCompleto: parts[1] || '',
         fechaNacimiento: parts[2] || '',
         cursoActual: parts[3] || '',
       };
     }
-    
+
     return null;
   }
 
   private normalizeDate(value: string) {
-    // Accepts YYYY-MM-DD or full ISO date-time strings.
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return value;

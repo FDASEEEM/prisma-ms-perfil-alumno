@@ -1,10 +1,6 @@
-import { IsString, IsNotEmpty, IsUUID, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
 
 export class CreateStudentDto {
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
-
   @IsString()
   @IsNotEmpty()
   nombreCompleto: string;

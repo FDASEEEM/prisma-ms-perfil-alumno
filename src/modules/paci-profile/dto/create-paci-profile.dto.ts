@@ -1,13 +1,9 @@
-import { IsString, IsNotEmpty, IsUUID, IsDateString, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, IsObject, IsUUID } from 'class-validator';
 
 export class CreatePaciProfileDto {
   @IsUUID()
   @IsNotEmpty()
   studentId: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
 
   @IsString()
   @IsNotEmpty()

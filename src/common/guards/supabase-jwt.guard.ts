@@ -1,41 +1,55 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
+  Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { Request } from 'express';
-import { supabaseConfig } from '../../config/database.config';
-import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class SupabaseJwtGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
-    const authHeader = request.headers.authorization;
+  private readonly logger = new Logger(SupabaseJwtGuard.name);
+  private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid authorization header');
+  constructor(private readonly configService: ConfigService) {
+    const supabaseUrl = this.configService.getOrThrow<string>('SUPABASE_URL');
+    this.jwks = createRemoteJWKSet(
+      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`),
+    );
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: unknown }>();
+    const authorization = request.headers.authorization;
+
+    if (!authorization) {
+      throw new UnauthorizedException('Authorization header is required.');
     }
 
-    const token = authHeader.substring(7);
+    const [scheme, token] = authorization.split(' ');
+
+    if (scheme?.toLowerCase() !== 'bearer' || !token) {
+      throw new UnauthorizedException('Invalid Authorization header.');
+    }
 
     try {
-      const decoded = jwt.verify(token, supabaseConfig.jwtSecret) as any;
-
-      if (!decoded.user_id) {
-        throw new UnauthorizedException('Invalid token: missing user_id');
-      }
-
-      // Attach user information to request for use in controllers/services
-      request['user'] = {
-        userId: decoded.user_id,
-        // Future: Add role, email_verified, etc. when needed
+      const { payload } = await jwtVerify(token, this.jwks, {
+        audience: 'authenticated',
+      });
+      request.user = {
+        id: payload.sub,
+        email: payload['email'],
+        role: payload['role'],
       };
-
       return true;
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
+    } catch (err) {
+      this.logger.error(`JWT verification failed: ${(err as Error).message}`);
+      throw new UnauthorizedException('Invalid or expired token.');
     }
   }
 }
