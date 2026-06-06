@@ -1,22 +1,28 @@
+import { Request } from 'express';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+type RequestWithUser = Request & {
+    user?: {
+        id?: string;
+    };
+};
 export declare class StudentController {
     private readonly studentService;
     constructor(studentService: StudentService);
-    create(createStudentDto: CreateStudentDto): Promise<{
-        userId: string;
+    create(request: RequestWithUser, createStudentDto: CreateStudentDto): Promise<{
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    findAll(): Promise<({
+    findAll(request: RequestWithUser): Promise<({
         paciProfiles: {
-            userId: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
@@ -29,18 +35,18 @@ export declare class StudentController {
             datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
         }[];
     } & {
-        userId: string;
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     })[]>;
-    findOne(id: string): Promise<{
+    findMe(request: RequestWithUser): Promise<{
         paciProfiles: {
-            userId: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
@@ -53,18 +59,18 @@ export declare class StudentController {
             datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
         }[];
     } & {
-        userId: string;
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    findByUserId(userId: string): Promise<{
+    findOne(request: RequestWithUser, id: string): Promise<{
         paciProfiles: {
-            userId: string;
             id: string;
+            userId: string;
             createdAt: Date;
             updatedAt: Date;
             studentId: string;
@@ -77,34 +83,35 @@ export declare class StudentController {
             datosEstructurales: import("@prisma/client/runtime/library").JsonValue;
         }[];
     } & {
-        userId: string;
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    update(id: string, updateStudentDto: UpdateStudentDto): Promise<{
-        userId: string;
+    update(request: RequestWithUser, id: string, updateStudentDto: UpdateStudentDto): Promise<{
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    remove(id: string): Promise<{
-        userId: string;
+    remove(request: RequestWithUser, id: string): Promise<{
         nombreCompleto: string;
         fechaNacimiento: Date;
         cursoActual: string;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    importFromPdf(file: Express.Multer.File): Promise<{
+    importFromPdf(request: RequestWithUser, file: Express.Multer.File): Promise<{
         message: string;
         count: number;
     }>;
 }
+export {};
