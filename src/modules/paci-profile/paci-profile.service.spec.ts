@@ -27,9 +27,8 @@ describe('PaciProfileService', () => {
     prismaMock.student.findUnique.mockResolvedValue(null);
 
     await expect(
-      service.create({
+      service.create('u1', null, {
         studentId: 's1',
-        userId: 'u1',
         diagnostico: 'DX',
         fechaElaboracion: '2024-01-01',
         fechaRevision: '2024-02-01',
@@ -42,12 +41,11 @@ describe('PaciProfileService', () => {
   });
 
   it('creates a paci profile with normalized dates', async () => {
-    prismaMock.student.findUnique.mockResolvedValue({ id: 's1' });
+    prismaMock.student.findUnique.mockResolvedValue({ id: 's1', userId: 'u1' });
     prismaMock.paciProfile.create.mockResolvedValue({ id: 'p1' });
 
-    await service.create({
+    await service.create('u1', null, {
       studentId: 's1',
-      userId: 'u1',
       diagnostico: 'DX',
       fechaElaboracion: '2024-01-01',
       fechaRevision: '2024-02-01',
@@ -65,7 +63,7 @@ describe('PaciProfileService', () => {
   it('filters paci profiles with combined criteria', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findFiltered({
+    await service.findFiltered('u1', null, {
       studentId: 's1',
       isActive: 'true',
       curso: '2B',
@@ -74,6 +72,7 @@ describe('PaciProfileService', () => {
     });
 
     const call = prismaMock.paciProfile.findMany.mock.calls[0][0];
+    expect(call.where.userId).toBe('u1');
     expect(call.where.studentId).toBe('s1');
     expect(call.where.student).toEqual({ is: { cursoActual: '2B' } });
     expect(call.where.fechaElaboracion.gte).toBeInstanceOf(Date);
@@ -84,7 +83,7 @@ describe('PaciProfileService', () => {
   it('filters paci profiles when inactive', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findFiltered({ isActive: '0' });
+    await service.findFiltered('u1', null, { isActive: '0' });
 
     const call = prismaMock.paciProfile.findMany.mock.calls[0][0];
     expect(call.where.NOT).toBeDefined();
@@ -93,9 +92,10 @@ describe('PaciProfileService', () => {
   it('finds all profiles with student relation', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findAll();
+    await service.findAll('u1', null);
 
     expect(prismaMock.paciProfile.findMany).toHaveBeenCalledWith({
+      where: { userId: 'u1' },
       include: { student: true },
     });
   });
@@ -103,75 +103,80 @@ describe('PaciProfileService', () => {
   it('finds active profiles', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findActive();
+    await service.findActive('u1', null);
 
     const call = prismaMock.paciProfile.findMany.mock.calls[0][0];
+    expect(call.where.userId).toBe('u1');
     expect(call.where.validFrom).toBeDefined();
   });
 
   it('finds historical profiles', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findHistorical();
+    await service.findHistorical('u1', null);
 
     const call = prismaMock.paciProfile.findMany.mock.calls[0][0];
+    expect(call.where.userId).toBe('u1');
     expect(call.where.validUntil).toBeDefined();
   });
 
   it('finds recent profiles with minimum limit', async () => {
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    await service.findRecent('0');
+    await service.findRecent('u1', null, '0');
 
     const call = prismaMock.paciProfile.findMany.mock.calls[0][0];
+    expect(call.where.userId).toBe('u1');
     expect(call.take).toBe(10);
   });
 
   it('throws when paci profile is missing by id', async () => {
     prismaMock.paciProfile.findUnique.mockResolvedValue(null);
 
-    await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
+    await expect(service.findOne('u1', null, 'missing')).rejects.toThrow(NotFoundException);
   });
 
   it('finds a paci profile by id with student relation', async () => {
-    prismaMock.paciProfile.findUnique.mockResolvedValue({ id: 'p1' });
+    prismaMock.paciProfile.findUnique.mockResolvedValue({ id: 'p1', userId: 'u1', student: {} });
 
-    const result = await service.findOne('p1');
+    const result = await service.findOne('u1', null, 'p1');
 
     expect(prismaMock.paciProfile.findUnique).toHaveBeenCalledWith({
       where: { id: 'p1' },
       include: { student: true },
     });
-    expect(result).toEqual({ id: 'p1' });
+    expect(result).toEqual({ id: 'p1', userId: 'u1', student: {} });
   });
 
   it('finds profiles by student id', async () => {
+    prismaMock.student.findUnique.mockResolvedValue({ id: 's1', userId: 'u1' });
     prismaMock.paciProfile.findMany.mockResolvedValue([]);
 
-    const result = await service.findByStudentId('s1');
+    const result = await service.findByStudentId('u1', null, 's1');
 
     expect(prismaMock.paciProfile.findMany).toHaveBeenCalledWith({
-      where: { studentId: 's1' },
+      where: { studentId: 's1', userId: 'u1' },
       include: { student: true },
     });
     expect(result).toEqual([]);
   });
 
   it('updates a paci profile with normalized dates', async () => {
+    prismaMock.paciProfile.findUnique.mockResolvedValue({ id: 'p1', userId: 'u1', student: {} });
     prismaMock.paciProfile.update.mockResolvedValue({ id: 'p1' });
 
-    await service.update('p1', { fechaElaboracion: '2024-01-01' });
+    await service.update('u1', null, 'p1', { fechaElaboracion: '2024-01-01' });
 
     const call = prismaMock.paciProfile.update.mock.calls[0][0];
     expect(call.data.fechaElaboracion).toBeInstanceOf(Date);
   });
 
   it('updates with multiple fields and preserves invalid dates', async () => {
+    prismaMock.paciProfile.findUnique.mockResolvedValue({ id: 'p2', userId: 'u1', student: {} });
     prismaMock.paciProfile.update.mockResolvedValue({ id: 'p2' });
 
-    await service.update('p2', {
+    await service.update('u1', null, 'p2', {
       studentId: 's1',
-      userId: 'u1',
       diagnostico: 'DX2',
       fechaRevision: 'not-a-date',
       duracion: '2',
@@ -182,7 +187,6 @@ describe('PaciProfileService', () => {
 
     const call = prismaMock.paciProfile.update.mock.calls[0][0];
     expect(call.data.studentId).toBe('s1');
-    expect(call.data.userId).toBe('u1');
     expect(call.data.diagnostico).toBe('DX2');
     expect(call.data.fechaRevision).toBe('not-a-date');
     expect(call.data.validFrom).toBeInstanceOf(Date);
@@ -191,14 +195,12 @@ describe('PaciProfileService', () => {
   });
 
   it('throws when update returns null', async () => {
-    prismaMock.paciProfile.update.mockResolvedValue(null);
-
-    await expect(service.update('p1', {})).rejects.toThrow(NotFoundException);
+    prismaMock.paciProfile.findUnique.mockResolvedValue(null);
+    await expect(service.update('u1', null, 'p1', {})).rejects.toThrow(NotFoundException);
   });
 
   it('throws when delete returns null', async () => {
-    prismaMock.paciProfile.delete.mockResolvedValue(null);
-
-    await expect(service.remove('p1')).rejects.toThrow(NotFoundException);
+    prismaMock.paciProfile.findUnique.mockResolvedValue(null);
+    await expect(service.remove('u1', null, 'p1')).rejects.toThrow(NotFoundException);
   });
 });

@@ -17,7 +17,7 @@ import { CreatePaciProfileDto } from './dto/create-paci-profile.dto';
 import { UpdatePaciProfileDto } from './dto/update-paci-profile.dto';
 import { SupabaseJwtGuard } from '../../common/guards/supabase-jwt.guard';
 
-type RequestWithUser = Request & { user?: { id?: string } };
+type RequestWithUser = Request & { user?: { id?: string; colegioId?: string | null } };
 
 @Controller('paci-profiles')
 @UseGuards(SupabaseJwtGuard)
@@ -27,19 +27,21 @@ export class PaciProfileController {
   @Post()
   create(@Req() request: RequestWithUser, @Body() createPaciProfileDto: CreatePaciProfileDto) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.create(userId, createPaciProfileDto);
+    return this.paciProfileService.create(userId, colegioId, createPaciProfileDto);
   }
 
   @Get()
   findAll(@Req() request: RequestWithUser) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findAll(userId);
+    return this.paciProfileService.findAll(userId, colegioId);
   }
 
   @Get('filter')
@@ -52,10 +54,11 @@ export class PaciProfileController {
     @Query('toDate') toDate?: string,
   ) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findFiltered(userId, {
+    return this.paciProfileService.findFiltered(userId, colegioId, {
       studentId,
       isActive,
       curso,
@@ -67,63 +70,70 @@ export class PaciProfileController {
   @Get('active')
   findActive(@Req() request: RequestWithUser) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findActive(userId);
+    return this.paciProfileService.findActive(userId, colegioId);
   }
 
   @Get('historical')
   findHistorical(@Req() request: RequestWithUser) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findHistorical(userId);
+    return this.paciProfileService.findHistorical(userId, colegioId);
   }
 
   @Get('recent')
   findRecent(@Req() request: RequestWithUser, @Query('limit') limit?: string) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findRecent(userId, limit);
+    return this.paciProfileService.findRecent(userId, colegioId, limit);
   }
 
   @Get(':id')
   findOne(@Req() request: RequestWithUser, @Param('id') id: string) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findOne(userId, id);
+    return this.paciProfileService.findOne(userId, colegioId, id);
   }
 
   @Get('student/:studentId')
   findByStudentId(@Req() request: RequestWithUser, @Param('studentId') studentId: string) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.findByStudentId(userId, studentId);
+    return this.paciProfileService.findByStudentId(userId, colegioId, studentId);
   }
 
   @Patch(':id')
   update(@Req() request: RequestWithUser, @Param('id') id: string, @Body() updatePaciProfileDto: UpdatePaciProfileDto) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.update(userId, id, updatePaciProfileDto);
+    return this.paciProfileService.update(userId, colegioId, id, updatePaciProfileDto);
   }
 
   @Delete(':id')
   remove(@Req() request: RequestWithUser, @Param('id') id: string) {
     const userId = request.user?.id;
+    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
-    return this.paciProfileService.remove(userId, id);
+    return this.paciProfileService.remove(userId, colegioId, id);
   }
 }

@@ -1,70 +1,54 @@
 import { UnauthorizedException } from '@nestjs/common';
-import jwt from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
+import { jwtVerify } from 'jose';
+import { SupabaseJwtGuard } from './supabase-jwt.guard';
 
-jest.mock('jsonwebtoken', () => ({
-  __esModule: true,
-  default: {
-    verify: jest.fn(),
-  },
+jest.mock('jose', () => ({
+  createRemoteJWKSet: jest.fn().mockReturnValue({}),
+  jwtVerify: jest.fn(),
 }));
 
 describe('SupabaseJwtGuard', () => {
-  const verifyMock = (jwt as unknown as { verify: jest.Mock }).verify;
+  let guard: SupabaseJwtGuard;
+  const verifyMock = jwtVerify as jest.MockedFunction<typeof jwtVerify>;
+
+  const createConfigService = () =>
+    ({
+      getOrThrow: jest.fn().mockReturnValue('https://test.supabase.co'),
+    }) as unknown as ConfigService;
 
   const createContext = (headers: Record<string, string | undefined>) => {
     const request: Record<string, unknown> = { headers };
-    const context = {
-      switchToHttp: () => ({
-        getRequest: () => request,
-      }),
-    } as any;
-    return { context, request };
+    return {
+      context: {
+        switchToHttp: () => ({ getRequest: () => request }),
+      } as any,
+      request,
+    };
   };
 
   beforeEach(() => {
-    jest.resetModules();
     jest.clearAllMocks();
-    process.env.SUPABASE_JWT_SECRET = 'secret';
+    guard = new SupabaseJwtGuard(createConfigService());
   });
 
   it('rejects when header is missing', async () => {
-    const { SupabaseJwtGuard } = require('./supabase-jwt.guard');
-    const guard = new SupabaseJwtGuard();
     const { context } = createContext({});
-
     await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
   });
 
-  it('rejects when token is invalid', async () => {
-    verifyMock.mockImplementation(() => {
-      throw new Error('invalid');
-    });
-
-    const { SupabaseJwtGuard } = require('./supabase-jwt.guard');
-    const guard = new SupabaseJwtGuard();
+  it('rejects when token verification fails', async () => {
+    verifyMock.mockRejectedValue(new Error('invalid'));
     const { context } = createContext({ authorization: 'Bearer bad' });
-
-    await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
-  });
-
-  it('rejects when user_id is missing', async () => {
-    verifyMock.mockReturnValue({});
-
-    const { SupabaseJwtGuard } = require('./supabase-jwt.guard');
-    const guard = new SupabaseJwtGuard();
-    const { context } = createContext({ authorization: 'Bearer ok' });
-
     await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
   });
 
   it('accepts valid token and attaches user', async () => {
-    verifyMock.mockReturnValue({ user_id: 'u1' });
-
-    const { SupabaseJwtGuard } = require('./supabase-jwt.guard');
-    const guard = new SupabaseJwtGuard();
+    verifyMock.mockResolvedValue({
+      payload: { sub: 'u1', email: 'test@test.com', role: 'authenticated' },
+    } as any);
     const { context, request } = createContext({ authorization: 'Bearer ok' });
-
     await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(request.user).toEqual({ userId: 'u1' });
+    expect(request.user).toEqual({ id: 'u1', email: 'test@test.com', role: 'authenticated' });
   });
 });

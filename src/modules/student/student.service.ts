@@ -8,7 +8,7 @@ import pdfParse from 'pdf-parse';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, createStudentDto: CreateStudentDto) {
+  async create(userId: string, colegioId: string | null, createStudentDto: CreateStudentDto) {
     const normalized = {
       ...createStudentDto,
       fechaNacimiento: this.normalizeDate(createStudentDto.fechaNacimiento),
@@ -17,20 +17,25 @@ export class StudentService {
       data: {
         ...normalized,
         userId,
+        colegioId,
       },
     });
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, colegioId: string | null) {
+    const where: any = { userId };
+    if (colegioId) {
+      where.colegioId = colegioId;
+    }
     return this.prisma.student.findMany({
-      where: { userId },
+      where,
       include: {
         paciProfiles: true,
       },
     });
   }
 
-  async findOne(userId: string, id: string) {
+  async findOne(userId: string, id: string, colegioId: string | null) {
     const student = await this.prisma.student.findUnique({
       where: { id },
       include: {
@@ -43,6 +48,10 @@ export class StudentService {
     }
 
     if (student.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this student.');
+    }
+
+    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
@@ -64,8 +73,8 @@ export class StudentService {
     return student;
   }
 
-  async update(userId: string, id: string, updateStudentDto: UpdateStudentDto) {
-    const existing = await this.findOne(userId, id);
+  async update(userId: string, id: string, colegioId: string | null, updateStudentDto: UpdateStudentDto) {
+    const existing = await this.findOne(userId, id, colegioId);
 
     const normalized = {
       ...updateStudentDto,
@@ -80,15 +89,15 @@ export class StudentService {
     });
   }
 
-  async remove(userId: string, id: string) {
-    const existing = await this.findOne(userId, id);
+  async remove(userId: string, id: string, colegioId: string | null) {
+    const existing = await this.findOne(userId, id, colegioId);
 
     return this.prisma.student.delete({
       where: { id: existing.id },
     });
   }
 
-  async importFromPdf(userId: string, file: Buffer) {
+  async importFromPdf(userId: string, colegioId: string | null, file: Buffer) {
     try {
       const data = await (pdfParse as any)(file);
       const text = data.text;
@@ -110,6 +119,7 @@ export class StudentService {
           ...s,
           fechaNacimiento: this.normalizeDate(s.fechaNacimiento) as Date,
           userId,
+          colegioId,
         })),
         skipDuplicates: true,
       });
