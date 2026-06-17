@@ -18,8 +18,11 @@ import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { SupabaseJwtGuard } from '../../common/guards/supabase-jwt.guard';
+import { resolveColegioId } from '../../common/utils/tenancy.util';
 
-type RequestWithUser = Request & { user?: { id?: string; colegioId?: string | null } };
+type RequestWithUser = Request & {
+  user?: { id?: string; role?: string; colegioId?: string | null };
+};
 
 @Controller('students')
 @UseGuards(SupabaseJwtGuard)
@@ -29,20 +32,20 @@ export class StudentController {
   @Post()
   create(@Req() request: RequestWithUser, @Body() createStudentDto: CreateStudentDto) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.create(userId, colegioId, createStudentDto);
   }
 
   @Get()
   findAll(@Req() request: RequestWithUser) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.findAll(userId, colegioId);
   }
 
@@ -58,41 +61,48 @@ export class StudentController {
   @Get(':id')
   findOne(@Req() request: RequestWithUser, @Param('id') id: string) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.findOne(userId, id, colegioId);
   }
 
   @Patch(':id')
-  update(@Req() request: RequestWithUser, @Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+  update(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.update(userId, id, colegioId, updateStudentDto);
   }
 
   @Delete(':id')
   remove(@Req() request: RequestWithUser, @Param('id') id: string) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.remove(userId, id, colegioId);
   }
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  importFromPdf(@Req() request: RequestWithUser, @UploadedFile() file: Express.Multer.File) {
+  importFromPdf(
+    @Req() request: RequestWithUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     const userId = request.user?.id;
-    const colegioId = request.user?.colegioId || null;
     if (!userId) {
       throw new BadRequestException('Authenticated user is required.');
     }
+    const colegioId = resolveColegioId(request.user);
     return this.studentService.importFromPdf(userId, colegioId, file.buffer);
   }
 }
