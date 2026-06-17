@@ -8,7 +8,7 @@ import { UpdatePaciProfileDto } from './dto/update-paci-profile.dto';
 export class PaciProfileService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, createPaciProfileDto: CreatePaciProfileDto) {
+  async create(userId: string, colegioId: string | null, createPaciProfileDto: CreatePaciProfileDto) {
     const student = await this.prisma.student.findUnique({
       where: { id: createPaciProfileDto.studentId },
     });
@@ -18,6 +18,10 @@ export class PaciProfileService {
     }
 
     if (student.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this student.');
+    }
+
+    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
@@ -31,9 +35,13 @@ export class PaciProfileService {
     });
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, colegioId: string | null) {
+    const where: Prisma.PaciProfileWhereInput = { userId };
+    if (colegioId) {
+      where.student = { is: { colegioId } };
+    }
     return this.prisma.paciProfile.findMany({
-      where: { userId },
+      where,
       include: {
         student: true,
       },
@@ -42,6 +50,7 @@ export class PaciProfileService {
 
   async findFiltered(
     userId: string,
+    colegioId: string | null,
     filters: {
       studentId?: string;
       isActive?: string;
@@ -52,12 +61,16 @@ export class PaciProfileService {
   ) {
     const where: Prisma.PaciProfileWhereInput = { userId };
 
+    if (colegioId) {
+      where.student = { is: { colegioId } };
+    }
+
     if (filters.studentId) {
       where.studentId = filters.studentId;
     }
 
     if (filters.curso) {
-      where.student = { is: { cursoActual: filters.curso } };
+      where.student = { is: { ...((where.student as any)?.is || {}), cursoActual: filters.curso } };
     }
 
     if (filters.fromDate || filters.toDate) {
@@ -89,40 +102,52 @@ export class PaciProfileService {
     });
   }
 
-  async findActive(userId: string) {
+  async findActive(userId: string, colegioId: string | null) {
     const now = new Date();
+    const where: Prisma.PaciProfileWhereInput = {
+      userId,
+      validFrom: { lte: now },
+      validUntil: { gte: now },
+    };
+    if (colegioId) {
+      where.student = { is: { colegioId } };
+    }
     return this.prisma.paciProfile.findMany({
-      where: {
-        userId,
-        validFrom: { lte: now },
-        validUntil: { gte: now },
-      },
+      where,
       include: { student: true },
     });
   }
 
-  async findHistorical(userId: string) {
+  async findHistorical(userId: string, colegioId: string | null) {
     const now = new Date();
+    const where: Prisma.PaciProfileWhereInput = {
+      userId,
+      validUntil: { lt: now },
+    };
+    if (colegioId) {
+      where.student = { is: { colegioId } };
+    }
     return this.prisma.paciProfile.findMany({
-      where: {
-        userId,
-        validUntil: { lt: now },
-      },
+      where,
       include: { student: true },
     });
   }
 
-  async findRecent(userId: string, limit?: string) {
+  async findRecent(userId: string, colegioId: string | null, limit?: string) {
     const take = Math.max(1, Number.parseInt(limit || '10', 10) || 10);
+    const where: Prisma.PaciProfileWhereInput = { userId };
+    if (colegioId) {
+      where.student = { is: { colegioId } };
+    }
     return this.prisma.paciProfile.findMany({
-      where: { userId },
+      where,
       orderBy: { createdAt: 'desc' },
       take,
       include: { student: true },
     });
   }
 
-  async findOne(userId: string, id: string) {
+  async findOne(userId: string, colegioId: string | null, id: string) {
     const paciProfile = await this.prisma.paciProfile.findUnique({
       where: { id },
       include: {
@@ -138,10 +163,14 @@ export class PaciProfileService {
       throw new ForbiddenException('You do not have access to this PACI profile.');
     }
 
+    if (colegioId && paciProfile.student.colegioId && paciProfile.student.colegioId !== colegioId) {
+      throw new ForbiddenException('You do not have access to this PACI profile.');
+    }
+
     return paciProfile;
   }
 
-  async findByStudentId(userId: string, studentId: string) {
+  async findByStudentId(userId: string, colegioId: string | null, studentId: string) {
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
     });
@@ -154,6 +183,10 @@ export class PaciProfileService {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
+    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
+      throw new ForbiddenException('You do not have access to this student.');
+    }
+
     return this.prisma.paciProfile.findMany({
       where: { studentId, userId },
       include: {
@@ -162,8 +195,8 @@ export class PaciProfileService {
     });
   }
 
-  async update(userId: string, id: string, updatePaciProfileDto: UpdatePaciProfileDto) {
-    const existing = await this.findOne(userId, id);
+  async update(userId: string, colegioId: string | null, id: string, updatePaciProfileDto: UpdatePaciProfileDto) {
+    const existing = await this.findOne(userId, colegioId, id);
 
     const normalized = this.normalizeUpdatePaciDates(updatePaciProfileDto);
 
@@ -176,8 +209,8 @@ export class PaciProfileService {
     });
   }
 
-  async remove(userId: string, id: string) {
-    const existing = await this.findOne(userId, id);
+  async remove(userId: string, colegioId: string | null, id: string) {
+    const existing = await this.findOne(userId, colegioId, id);
 
     return this.prisma.paciProfile.delete({
       where: { id: existing.id },
