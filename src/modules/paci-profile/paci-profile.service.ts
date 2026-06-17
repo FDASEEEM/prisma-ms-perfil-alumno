@@ -21,7 +21,7 @@ export class PaciProfileService {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
-    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
+    if (colegioId && student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
@@ -163,7 +163,7 @@ export class PaciProfileService {
       throw new ForbiddenException('You do not have access to this PACI profile.');
     }
 
-    if (colegioId && paciProfile.student.colegioId && paciProfile.student.colegioId !== colegioId) {
+    if (colegioId && paciProfile.student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this PACI profile.');
     }
 
@@ -183,7 +183,7 @@ export class PaciProfileService {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
-    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
+    if (colegioId && student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this student.');
     }
 

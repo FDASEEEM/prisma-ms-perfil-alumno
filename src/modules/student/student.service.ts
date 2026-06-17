@@ -51,7 +51,7 @@ export class StudentService {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
-    if (colegioId && student.colegioId && student.colegioId !== colegioId) {
+    if (colegioId && student.colegioId !== colegioId) {
       throw new ForbiddenException('You do not have access to this student.');
     }
 
