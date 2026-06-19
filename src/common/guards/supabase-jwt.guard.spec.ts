@@ -49,6 +49,6 @@ describe('SupabaseJwtGuard', () => {
     } as any);
     const { context, request } = createContext({ authorization: 'Bearer ok' });
     await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(request.user).toEqual({ id: 'u1', email: 'test@test.com', role: 'authenticated' });
+    expect(request.user).toEqual({ id: 'u1', email: 'test@test.com', role: 'authenticated', appRole: undefined, colegioId: null });
   });
 });
